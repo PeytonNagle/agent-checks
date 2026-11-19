@@ -34,8 +34,10 @@ jobs:
             uv run pre-commit try-repo . "$id" --files tests/fixtures/clean.py
           done
       - run: uv run pre-commit run --all-files
+      - name: install agent-lint into the project venv, beside ruff and mypy
+        run: uv pip install "agent-lint @ git+https://github.com/MartinCastroAlvarez/agent-lint@bcf12b8cbd6a9e37638f4760d781454167e69c26"
       - name: agent-lint ratchet
         uses: MartinCastroAlvarez/agent-lint@bcf12b8cbd6a9e37638f4760d781454167e69c26
         with:
-          install: "true"
+          install: "false"
           comment: "false"
