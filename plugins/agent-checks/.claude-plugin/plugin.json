@@ -1,6 +1,6 @@
 {
   "name": "agent-checks",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Install deterministic lint checks, Claude Code hooks and CI into a repository",
   "author": {
     "name": "Peyton Nagle"

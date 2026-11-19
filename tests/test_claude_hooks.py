@@ -91,3 +91,41 @@ def test_lint_changed_skips_when_already_continuing(project: Path) -> None:
 def test_lint_changed_passes_with_no_changes(project: Path) -> None:
     result = _run("lint-changed.sh", project, {"stop_hook_active": False})
     assert result.returncode == 0, result.stderr
+
+
+FIXER = """\
+- repo: local
+  hooks:
+  - id: fixer
+    name: fixer
+    language: system
+    types: [python]
+    entry: python3 -c "import sys; [open(f, 'w').write('X = 1\\n') for f in sys.argv[1:]]"
+"""
+
+
+def test_lint_file_passes_once_a_formatter_fixed_the_file(project: Path) -> None:
+    with (project / ".pre-commit-config.yaml").open("a") as config:
+        config.write(FIXER)
+    messy = project / "clean.py"
+    messy.write_text("X=1\n")
+    result = _run("lint-file.sh", project, {"tool_input": {"file_path": str(messy)}})
+    assert result.returncode == 0, result.stderr
+    assert messy.read_text() == "X = 1\n"
+
+
+def test_lint_file_reads_notebook_path(project: Path) -> None:
+    bad = project / "bad.py"
+    bad.write_text("# one\n# two\n# three\n")
+    result = _run("lint-file.sh", project, {"tool_input": {"notebook_path": str(bad)}})
+    assert result.returncode == 2
+
+
+def test_lint_changed_from_a_subdirectory(project: Path) -> None:
+    (project / "sub").mkdir()
+    (project / "sub/new.py").write_text("# one\n# two\n# three\n")
+    (project / "clean.py").write_text("# one\n# two\n# three\nX = 1\n")
+    result = _run("lint-changed.sh", project / "sub", {"stop_hook_active": False})
+    assert result.returncode == 2
+    assert "sub/new.py" in result.stderr
+    assert "clean.py" in result.stderr

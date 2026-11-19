@@ -3,11 +3,14 @@
 set -u
 active=$(python3 -c 'import json, sys; print(json.load(sys.stdin).get("stop_hook_active", False))') || exit 1
 [ "$active" = "True" ] && exit 0
-cd "${CLAUDE_PROJECT_DIR:-.}" || exit 1
+# git diff prints root-relative paths and pre-commit resolves them from the cwd.
+cd "${CLAUDE_PROJECT_DIR:-.}" && cd "$(git rev-parse --show-toplevel)" || exit 1
 files=$({ git diff --name-only --diff-filter=d HEAD 2>/dev/null; git ls-files --others --exclude-standard; } | sort -u)
 [ -n "$files" ] || exit 0
 if command -v pre-commit >/dev/null 2>&1; then set -- pre-commit; else set -- uvx pre-commit; fi
-if ! out=$(printf '%s\n' "$files" | tr '\n' '\0' | xargs -0 "$@" run --files 2>&1); then
+run() { printf '%s\n' "$files" | tr '\n' '\0' | xargs -0 "$@" run --files; }
+# A formatter fails the run that rewrites a file, so only a second failure counts.
+if ! run "$@" >/dev/null 2>&1 && ! out=$(run "$@" 2>&1); then
   printf 'Changed files still fail the checks. Fix them before stopping:\n%s\n' "$out" >&2
   exit 2
 fi

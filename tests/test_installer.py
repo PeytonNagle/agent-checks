@@ -112,3 +112,14 @@ def test_complete_array_keeps_its_layout(repo: Path) -> None:
     items = ", ".join(f'"{code}"' for code in t.RUFF_SELECT)
     text = f"[tool.ruff.lint]\nselect = [{items}]\n"
     assert f"select = [{items}]" in merge.pyproject(text)
+
+
+def test_upgrade_replaces_the_pinned_guard_command() -> None:
+    from agent_checks.installer import merge
+    from agent_checks.installer import targets as t
+
+    old = t.GUARD_COMMAND.replace(t.CHECKS_REV, "v0.0.1")
+    text = json.dumps({"hooks": {"PreToolUse": [{"hooks": [{"type": "command", "command": old}]}]}})
+    groups = json.loads(merge.claude_settings(text))["hooks"]["PreToolUse"]
+    commands = [h["command"] for g in groups for h in g["hooks"]]
+    assert commands == [t.GUARD_COMMAND]

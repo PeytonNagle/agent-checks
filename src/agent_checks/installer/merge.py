@@ -2,6 +2,7 @@
 
 import io
 import json
+import re
 from collections.abc import Iterable, Mapping
 from typing import Any
 
@@ -96,10 +97,16 @@ def pre_commit(text: str) -> str:
     return out.getvalue()
 
 
+def _unpinned(command: str) -> str:
+    return re.sub(r"@v\d+(\.\d+)*", "", command)
+
+
 def _hook(settings: dict[str, Any], event: str, matcher: str | None, command: str) -> None:
     groups = settings.setdefault("hooks", {}).setdefault(event, [])
-    if any(h.get("command") == command for g in groups for h in g.get("hooks", [])):
-        return
+    for hook in (h for g in groups for h in g.get("hooks", [])):
+        if _unpinned(str(hook.get("command", ""))) == _unpinned(command):
+            hook["command"] = command
+            return
     group: dict[str, Any] = {"hooks": [{"type": "command", "command": command}]}
     if matcher:
         group = {"matcher": matcher, **group}
