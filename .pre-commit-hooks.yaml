@@ -1,0 +1,20 @@
+- id: comment-length
+  name: comment blocks are at most 2 lines
+  entry: agent-checks comment-length
+  language: python
+  types_or: [python, shell]
+- id: chat-refs
+  name: comments do not refer to the chat or plan
+  entry: agent-checks chat-refs
+  language: python
+  types_or: [python, shell]
+- id: func-length
+  name: function bodies are at most 40 lines
+  entry: agent-checks func-length
+  language: python
+  types: [python]
+- id: suppression-reason
+  name: suppressions name a code and a reason
+  entry: agent-checks suppression-reason
+  language: python
+  types_or: [python, shell]
