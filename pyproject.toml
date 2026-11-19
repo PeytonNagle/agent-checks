@@ -1,0 +1,56 @@
+[project]
+name = "agent-checks"
+version = "0.1.0"
+description = "Deterministic checks that keep agent-written code small, commented sparingly and unsuppressed"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+agent-checks = "agent_checks.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.13.9,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = ["mypy>=1.18", "pytest>=9.1.1", "ruff>=0.17.2"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "I", "UP", "B", "C901", "PLR0911", "PLR0912", "PLR0913", "PLR0915", "PLR0917",
+    "BLE", "S110", "S112", "SIM", "RET", "PIE", "PERF", "C4", "RUF", "G", "LOG", "PGH", "T20",
+    "DTZ", "ERA", "TRY", "ARG",
+]
+ignore = ["TRY003"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.pylint]
+max-args = 5
+max-positional-args = 5
+max-returns = 6
+max-branches = 12
+max-statements = 50
+
+[tool.ruff.lint.per-file-ignores]
+"src/agent_checks/cli.py" = ["T201"]
+"tests/**" = ["ARG"]
+
+[tool.mypy]
+strict = true
+warn_unreachable = true
+enable_error_code = ["ignore-without-code"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.agent-checks]
+max-comment-lines = 2
+max-function-lines = 40
