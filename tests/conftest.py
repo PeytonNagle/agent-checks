@@ -6,10 +6,11 @@ import pytest
 from agent_checks.cli import main
 
 Run = Callable[..., tuple[int, str]]
+Write = Callable[[str, str], Path]
 
 
 @pytest.fixture
-def write(tmp_path: Path) -> Callable[[str, str], Path]:
+def write(tmp_path: Path) -> Write:
     def _write(name: str, text: str) -> Path:
         path = tmp_path / name
         path.parent.mkdir(parents=True, exist_ok=True)

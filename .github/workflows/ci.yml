@@ -1,0 +1,41 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - run: echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+      - run: uv run ruff check
+      - run: uv run ruff format --check
+      - run: uv run mypy .
+      - run: uv run pytest
+      - name: shellcheck
+        run: git ls-files '*.sh' | xargs uvx --from shellcheck-py shellcheck
+      - name: pre-commit hooks, end to end
+        run: |
+          for pair in comment-length:long_comment chat-refs:chat_ref func-length:long_function suppression-reason:bare_noqa; do
+            id=${pair%%:*}
+            if uv run pre-commit try-repo . "$id" --files "tests/fixtures/${pair#*:}.py"; then
+              echo "::error::$id passed a file it should fail"; exit 1
+            fi
+            uv run pre-commit try-repo . "$id" --files tests/fixtures/clean.py
+          done
+      - run: uv run pre-commit run --all-files
+      - name: agent-lint ratchet
+        uses: MartinCastroAlvarez/agent-lint@bcf12b8cbd6a9e37638f4760d781454167e69c26
+        with:
+          install: "true"
+          comment: "false"

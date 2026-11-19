@@ -57,6 +57,7 @@ max-nested-blocks = 3
 "tests/**" = ["ARG"]
 
 [tool.mypy]
+exclude = ["^tests/fixtures/"]
 strict = true
 warn_unreachable = true
 enable_error_code = ["ignore-without-code"]

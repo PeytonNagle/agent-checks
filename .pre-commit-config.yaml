@@ -1,0 +1,31 @@
+repos:
+  - repo: local
+    hooks:
+      - id: comment-length
+        name: comment blocks are at most 2 lines
+        entry: uv run agent-checks comment-length
+        language: system
+        types_or: [python, shell]
+        exclude: ^tests/fixtures/
+      - id: chat-refs
+        name: comments do not refer to the chat or plan
+        entry: uv run agent-checks chat-refs
+        language: system
+        types_or: [python, shell]
+        exclude: ^tests/fixtures/
+      - id: func-length
+        name: function bodies are at most 40 lines
+        entry: uv run agent-checks func-length
+        language: system
+        types: [python]
+        exclude: ^tests/fixtures/
+      - id: suppression-reason
+        name: suppressions name a code and a reason
+        entry: uv run agent-checks suppression-reason
+        language: system
+        types_or: [python, shell]
+        exclude: ^tests/fixtures/
+  - repo: https://github.com/MartinCastroAlvarez/agent-lint
+    rev: bcf12b8cbd6a9e37638f4760d781454167e69c26
+    hooks:
+      - id: agent-lint

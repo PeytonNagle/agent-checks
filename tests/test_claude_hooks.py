@@ -7,7 +7,6 @@ import pytest
 
 HOOKS = Path(__file__).parents[1] / "src" / "agent_checks" / "claude_hooks"
 REPO = Path(__file__).parents[1]
-pytestmark = pytest.mark.skipif(shutil.which("pre-commit") is None, reason="needs pre-commit")
 
 
 @pytest.fixture

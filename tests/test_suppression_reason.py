@@ -1,5 +1,5 @@
 import pytest
-from conftest import Run
+from conftest import Run, Write
 
 
 @pytest.mark.parametrize(
@@ -13,7 +13,7 @@ from conftest import Run
         "eval(s)  # nosec B307",
     ],
 )
-def test_python_suppression_without_reason_fails(write, run: Run, line: str) -> None:
+def test_python_suppression_without_reason_fails(write: Write, run: Run, line: str) -> None:
     path = write("a.py", line + "\n")
     code, out = run("suppression-reason", path)
     assert code == 1
@@ -28,23 +28,23 @@ def test_python_suppression_without_reason_fails(write, run: Run, line: str) -> 
         "def f():  # pragma: no cover  # only runs on the Pi",
     ],
 )
-def test_python_suppression_with_code_and_reason_passes(write, run: Run, line: str) -> None:
+def test_python_suppression_with_code_and_reason_passes(write: Write, run: Run, line: str) -> None:
     assert run("suppression-reason", write("a.py", line + "\n")) == (0, "")
 
 
-def test_bare_noqa_with_reason_still_fails(write, run: Run) -> None:
+def test_bare_noqa_with_reason_still_fails(write: Write, run: Run) -> None:
     assert run("suppression-reason", write("a.py", "import os  # noqa  # because\n"))[0] == 1
 
 
-def test_shellcheck_without_reason_fails(write, run: Run) -> None:
+def test_shellcheck_without_reason_fails(write: Write, run: Run) -> None:
     path = write("a.sh", "# shellcheck disable=SC2086\necho $x\n")
     assert run("suppression-reason", path)[0] == 1
 
 
-def test_shellcheck_with_reason_passes(write, run: Run) -> None:
+def test_shellcheck_with_reason_passes(write: Write, run: Run) -> None:
     path = write("a.sh", "# shellcheck disable=SC2086 # word splitting is intended\necho $x\n")
     assert run("suppression-reason", path)[0] == 0
 
 
-def test_suppression_text_in_string_ignored(write, run: Run) -> None:
+def test_suppression_text_in_string_ignored(write: Write, run: Run) -> None:
     assert run("suppression-reason", write("a.py", 'x = "# noqa"\n'))[0] == 0
