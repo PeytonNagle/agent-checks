@@ -3,6 +3,7 @@
 import json
 import os
 import sys
+import tomllib
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import TextIO
@@ -43,15 +44,27 @@ def _target(payload: dict[str, object], root: Path) -> Path | None:
     return path.relative_to(root) if path.is_relative_to(root) else None
 
 
+def _extra_patterns(root: Path, stderr: TextIO) -> list[str]:
+    try:
+        extra: list[str] = load_config(root).get("protected-paths", [])
+    except tomllib.TOMLDecodeError as error:
+        print(f"config-guard: ignoring invalid pyproject.toml: {error}", file=stderr)
+        return []
+    return extra
+
+
 def run(stdin: TextIO, stderr: TextIO) -> int:
     try:
         payload = json.load(stdin)
     except json.JSONDecodeError as error:
         print(f"config-guard: could not read hook input: {error}", file=stderr)
         return 1
+    if not isinstance(payload, dict):
+        print("config-guard: hook input is not a JSON object", file=stderr)
+        return 1
     root = Path(os.environ.get("CLAUDE_PROJECT_DIR") or payload.get("cwd") or ".").resolve()
     rel = _target(payload, root)
-    patterns = [*PROTECTED, *load_config(root).get("protected-paths", [])]
+    patterns = [*PROTECTED, *_extra_patterns(root, stderr)]
     if rel is None or not _is_protected(rel, patterns):
         return 0
     print(

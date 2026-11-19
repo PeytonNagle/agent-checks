@@ -48,3 +48,11 @@ def test_shellcheck_with_reason_passes(write: Write, run: Run) -> None:
 
 def test_suppression_text_in_string_ignored(write: Write, run: Run) -> None:
     assert run("suppression-reason", write("a.py", 'x = "# noqa"\n'))[0] == 0
+
+
+def test_blanket_shellcheck_disable_fails(write: Write, run: Run) -> None:
+    assert run("suppression-reason", write("a.sh", "# shellcheck disable=all\n"))[0] == 1
+
+
+def test_file_wide_noqa_fails(write: Write, run: Run) -> None:
+    assert run("suppression-reason", write("a.py", "# ruff: noqa\nx = 1\n"))[0] == 1

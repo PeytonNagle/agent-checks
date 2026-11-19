@@ -84,3 +84,20 @@ def test_extra_protected_paths_from_config(
     )
     payload = _edit(tmp_path, "tools/mutmut_changed.sh")
     assert _hook(monkeypatch, capsys, tmp_path, payload)[0] == 2
+
+
+@pytest.mark.parametrize("payload", ["[1]", '"text"'])
+def test_non_object_input_errors_without_blocking(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+    payload: str,
+) -> None:
+    assert _hook(monkeypatch, capsys, tmp_path, payload)[0] == 1
+
+
+def test_invalid_pyproject_still_blocks_default_paths(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    (tmp_path / "pyproject.toml").write_text("not = [toml\n")
+    assert _hook(monkeypatch, capsys, tmp_path, _edit(tmp_path, "pyproject.toml"))[0] == 2

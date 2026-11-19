@@ -85,3 +85,21 @@ def test_declined_file_is_not_written(repo: Path, monkeypatch: pytest.MonkeyPatc
     monkeypatch.setattr("builtins.input", lambda _: "n")
     run(repo, dry_run=False, assume_yes=False)
     assert _files(repo) == ["pyproject.toml"]
+
+
+def test_multiline_strings_are_untouched(repo: Path) -> None:
+    (repo / "pyproject.toml").write_text('[tool.x]\ns = """\nfoo\n[bar]\n"""\n')
+    run(repo, dry_run=False, assume_yes=True)
+    doc = tomlkit.parse((repo / "pyproject.toml").read_text())
+    assert doc["tool"]["x"]["s"] == "foo\n[bar]\n"
+
+
+def test_existing_newer_pin_and_hook_alias_kept(repo: Path) -> None:
+    (repo / ".pre-commit-config.yaml").write_text(
+        "repos:\n  - repo: https://github.com/astral-sh/ruff-pre-commit\n"
+        "    rev: v0.20.0\n    hooks:\n      - id: ruff\n"
+    )
+    run(repo, dry_run=False, assume_yes=True)
+    text = (repo / ".pre-commit-config.yaml").read_text()
+    assert "v0.20.0" in text
+    assert "ruff-check" not in text

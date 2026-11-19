@@ -5,6 +5,7 @@ import ast
 from collections.abc import Iterator
 from pathlib import Path
 
+from agent_checks.comments import is_python
 from agent_checks.report import Violation
 
 Function = ast.FunctionDef | ast.AsyncFunctionDef
@@ -31,10 +32,13 @@ def _body_lines(node: Function) -> int:
 
 
 def check(path: Path, args: argparse.Namespace) -> Iterator[Violation]:
-    if path.suffix != ".py":
+    text = path.read_text()
+    if not is_python(path, text):
         return
-    limit = args.max_lines or args.config.get("max-function-lines", 40)
-    for node in ast.walk(ast.parse(path.read_text(), filename=str(path))):
+    limit = (
+        args.max_lines if args.max_lines is not None else args.config.get("max-function-lines", 40)
+    )
+    for node in ast.walk(ast.parse(text, filename=str(path))):
         if isinstance(node, Function):
             length = _body_lines(node)
             if length > limit:

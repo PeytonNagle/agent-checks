@@ -40,6 +40,13 @@ def _shell(text: str) -> Iterator[Comment]:
             yield Comment(number, line[start:], not line[:start].strip())
 
 
+def is_python(path: Path, text: str) -> bool:
+    if path.suffix in {".py", ".pyi"}:
+        return True
+    first = text.split("\n", 1)[0]
+    return path.suffix == "" and first.startswith("#!") and "python" in first
+
+
 def comments(path: Path) -> Iterator[Comment]:
     text = path.read_text()
-    return _python(text) if path.suffix == ".py" else _shell(text)
+    return _python(text) if is_python(path, text) else _shell(text)

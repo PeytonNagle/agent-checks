@@ -44,3 +44,20 @@ def test_max_from_pyproject(write: Write, run: Run) -> None:
     write("pyproject.toml", "[tool.agent-checks]\nmax-comment-lines = 3\n")
     path = write("a.py", "# one\n# two\n# three\n")
     assert run("comment-length", path)[0] == 0
+
+
+def test_unparseable_file_is_reported(write: Write, run: Run) -> None:
+    path = write("a.py", "x = (\n")
+    code, out = run("comment-length", path)
+    assert code == 1
+    assert f"{path}:1: AC001" in out
+
+
+def test_stub_docstring_is_not_a_comment(write: Write, run: Run) -> None:
+    text = 'def f() -> None:\n    """\n    # a\n    # b\n    # c\n    """\n'
+    assert run("comment-length", write("a.pyi", text))[0] == 0
+
+
+def test_config_from_the_files_own_project(write: Write, run: Run) -> None:
+    write("pkg/pyproject.toml", "[tool.agent-checks]\nmax-comment-lines = 3\n")
+    assert run("comment-length", write("pkg/a.py", "# one\n# two\n# three\n"))[0] == 0

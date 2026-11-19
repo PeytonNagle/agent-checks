@@ -10,11 +10,15 @@ from agent_checks.report import Violation
 
 CODE = r"[A-Z]+[0-9]+"
 SUPPRESSIONS = {
-    "noqa": re.compile(rf"#\s*noqa\b(?P<codes>:\s*{CODE}(?:[,\s]+{CODE})*)?", re.IGNORECASE),
+    "noqa": re.compile(
+        rf"#\s*(?:(?:ruff|flake8):\s*)?noqa\b(?P<codes>:\s*{CODE}(?:[,\s]+{CODE})*)?", re.IGNORECASE
+    ),
     "type: ignore": re.compile(r"#\s*type:\s*ignore\b(?P<codes>\[[^\]]+\])?"),
     "pragma: no cover": re.compile(r"#\s*pragma:\s*no\s*cover(?P<codes>)"),
     "nosec": re.compile(rf"#\s*nosec\b(?P<codes>\s+{CODE}(?:[,\s]+{CODE})*)?"),
-    "shellcheck disable": re.compile(r"#\s*shellcheck\s+disable=(?P<codes>SC\d+(?:,SC\d+)*)"),
+    "shellcheck disable": re.compile(
+        r"#\s*shellcheck\s+disable\s*=\s*(?P<codes>SC\d+(?:,SC\d+)*)?"
+    ),
 }
 REASON = re.compile(r"#\s*\S")
 FIX = "write `# <tool>: <CODE>  # <why this is safe>`, or fix the code instead"

@@ -1,6 +1,7 @@
 """Command line entry point: `agent-checks <check> FILES...`."""
 
 import argparse
+import tokenize
 from collections.abc import Callable, Iterable, Sequence
 from pathlib import Path
 
@@ -40,10 +41,18 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _check_file(check: FileCheck, path: Path, args: argparse.Namespace) -> list[Violation]:
+    args.config = load_config(path.parent)
+    try:
+        return list(check(path, args))
+    except (SyntaxError, tokenize.TokenError, UnicodeDecodeError) as error:
+        fix = "fix the syntax error so the file parses"
+        return [Violation(path, getattr(error, "lineno", None) or 1, "AC001", str(error), fix)]
+
+
 def _run_file_check(args: argparse.Namespace) -> int:
-    args.config = load_config()
     check, _ = FILE_CHECKS[args.command]
-    violations = [v for path in args.files for v in check(path, args)]
+    violations = [v for path in args.files for v in _check_file(check, path, args)]
     for violation in violations:
         print(violation)
     return 1 if violations else 0

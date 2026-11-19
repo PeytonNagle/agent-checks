@@ -33,7 +33,7 @@ def _blocks(found: Iterable[Comment]) -> Iterator[tuple[int, int]]:
 
 
 def check(path: Path, args: argparse.Namespace) -> Iterator[Violation]:
-    limit = args.max or args.config.get("max-comment-lines", 2)
+    limit = args.max if args.max is not None else args.config.get("max-comment-lines", 2)
     for start, length in _blocks(comments(path)):
         if length > limit:
             yield Violation(
