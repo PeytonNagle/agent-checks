@@ -2,6 +2,7 @@
 
 import io
 import json
+import re
 from collections.abc import Iterable, Mapping
 from typing import Any
 
@@ -27,6 +28,8 @@ def _extend(table: Any, key: str, values: Iterable[str]) -> None:
         table[key] = tomlkit.array()
         current = table[key]
     current.extend(v for v in values if v not in current)
+    if len(current) > 4:
+        current.multiline(True)
 
 
 def _set_all(table: Any, values: Mapping[str, object]) -> None:
@@ -49,7 +52,7 @@ def pyproject(text: str) -> str:
     checks = _table(doc, "tool", "agent-checks")
     for key, value in t.AGENT_CHECKS.items():
         checks.setdefault(key, value)
-    return tomlkit.dumps(doc)
+    return re.sub(r"([^\n])\n\[", "\\1\n\n[", tomlkit.dumps(doc))
 
 
 def _repo_entry(repos: list[Any], url: str, rev: str, hook_ids: Iterable[str]) -> None:
