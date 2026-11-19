@@ -29,7 +29,10 @@ def _extend(table: Any, key: str, values: Iterable[str]) -> None:
     if current is None:
         table[key] = tomlkit.array()
         current = table[key]
-    current.extend(v for v in values if v not in current)
+    missing = [v for v in values if v not in current]
+    if not missing:
+        return
+    current.extend(missing)
     if len(current) > 4:
         current.multiline(True)
 

@@ -103,3 +103,12 @@ def test_existing_newer_pin_and_hook_alias_kept(repo: Path) -> None:
     text = (repo / ".pre-commit-config.yaml").read_text()
     assert "v0.20.0" in text
     assert "ruff-check" not in text
+
+
+def test_complete_array_keeps_its_layout(repo: Path) -> None:
+    from agent_checks.installer import merge
+    from agent_checks.installer import targets as t
+
+    items = ", ".join(f'"{code}"' for code in t.RUFF_SELECT)
+    text = f"[tool.ruff.lint]\nselect = [{items}]\n"
+    assert f"select = [{items}]" in merge.pyproject(text)
