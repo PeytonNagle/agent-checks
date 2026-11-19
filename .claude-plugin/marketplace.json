@@ -1,0 +1,14 @@
+{
+  "name": "agent-checks",
+  "description": "Deterministic lint checks and hooks for agent-written code",
+  "owner": {
+    "name": "Peyton Nagle"
+  },
+  "plugins": [
+    {
+      "name": "agent-checks",
+      "source": "./plugins/agent-checks",
+      "description": "Install deterministic lint checks, Claude Code hooks and CI into a repository"
+    }
+  ]
+}
