@@ -4,7 +4,14 @@ import argparse
 from collections.abc import Callable, Iterable, Sequence
 from pathlib import Path
 
-from agent_checks import chat_refs, comment_length, config_guard, func_length, suppression_reason
+from agent_checks import (
+    chat_refs,
+    comment_length,
+    config_guard,
+    func_length,
+    installer,
+    suppression_reason,
+)
 from agent_checks.report import Violation, load_config
 
 FileCheck = Callable[[Path, argparse.Namespace], Iterable[Violation]]
@@ -26,6 +33,10 @@ def _parser() -> argparse.ArgumentParser:
         add_arguments(cmd)
         cmd.add_argument("files", nargs="*", type=Path)
     sub.add_parser("config-guard", help="Claude Code PreToolUse hook; reads JSON on stdin")
+    init = sub.add_parser("init", help="install the checks, hooks and CI into a repository")
+    init.add_argument("root", nargs="?", type=Path, default=Path())
+    init.add_argument("--dry-run", action="store_true", help="print the diff, write nothing")
+    init.add_argument("--yes", action="store_true", help="apply every file without asking")
     return parser
 
 
@@ -42,4 +53,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     if args.command == "config-guard":
         return config_guard.main()
+    if args.command == "init":
+        return installer.run(args.root, dry_run=args.dry_run, assume_yes=args.yes)
     return _run_file_check(args)

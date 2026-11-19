@@ -5,7 +5,10 @@ description = "Deterministic checks that keep agent-written code small, commente
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "ruamel-yaml>=0.19.1",
+    "tomlkit>=0.15.2",
+]
 
 [project.scripts]
 agent-checks = "agent_checks.cli:main"
@@ -31,9 +34,11 @@ extend-exclude = ["tests/fixtures"]
 select = [
     "E", "F", "I", "UP", "B", "C901", "PLR0911", "PLR0912", "PLR0913", "PLR0915", "PLR0917",
     "BLE", "S110", "S112", "SIM", "RET", "PIE", "PERF", "C4", "RUF", "G", "LOG", "PGH", "T20",
-    "DTZ", "ERA", "TRY", "ARG",
+    "DTZ", "ERA", "TRY", "ARG", "PLR1702",
 ]
 ignore = ["TRY003"]
+preview = true
+explicit-preview-rules = true
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
@@ -44,9 +49,11 @@ max-positional-args = 5
 max-returns = 6
 max-branches = 12
 max-statements = 50
+max-nested-blocks = 3
 
 [tool.ruff.lint.per-file-ignores]
 "src/agent_checks/cli.py" = ["T201"]
+"src/agent_checks/installer/__init__.py" = ["T201"]
 "tests/**" = ["ARG"]
 
 [tool.mypy]

@@ -1,0 +1,87 @@
+import json
+import subprocess
+from pathlib import Path
+
+import pytest
+import tomlkit
+
+from agent_checks.installer import plan, run
+
+EXPECTED = [
+    ".claude/hooks/lint-changed.sh",
+    ".claude/hooks/lint-file.sh",
+    ".claude/settings.json",
+    ".github/workflows/agent-checks.yml",
+    ".pre-commit-config.yaml",
+    "pyproject.toml",
+]
+
+
+@pytest.fixture
+def repo(tmp_path: Path) -> Path:
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    (tmp_path / "pyproject.toml").write_text('[project]\nname = "demo"\n')
+    return tmp_path
+
+
+def _files(root: Path) -> list[str]:
+    return sorted(
+        p.relative_to(root).as_posix()
+        for p in root.rglob("*")
+        if ".git/" not in p.as_posix() + "/" and p.is_file()
+    )
+
+
+def test_fresh_repo_gets_every_file(repo: Path) -> None:
+    run(repo, dry_run=False, assume_yes=True)
+    assert _files(repo) == EXPECTED
+    lint = tomlkit.parse((repo / "pyproject.toml").read_text())["tool"]["ruff"]["lint"]
+    assert "C901" in lint["select"]
+    assert lint["mccabe"]["max-complexity"] == 10
+    settings = json.loads((repo / ".claude/settings.json").read_text())
+    assert {"PreToolUse", "PostToolUse", "Stop"} <= settings["hooks"].keys()
+    assert any("pyproject.toml" in rule for rule in settings["permissions"]["deny"])
+
+
+def test_existing_config_keeps_comments_and_unrelated_keys(repo: Path) -> None:
+    (repo / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\n\n[tool.ruff.lint]\n# keep me\nselect = ["E", "Q"]\n'
+    )
+    (repo / ".claude").mkdir()
+    (repo / ".claude/settings.json").write_text(
+        '{"model": "opus", "permissions": {"allow": ["Bash(ls)"]}}'
+    )
+    run(repo, dry_run=False, assume_yes=True)
+    text = (repo / "pyproject.toml").read_text()
+    assert "# keep me" in text
+    assert '"Q"' in text
+    settings = json.loads((repo / ".claude/settings.json").read_text())
+    assert settings["model"] == "opus"
+    assert settings["permissions"]["allow"] == ["Bash(ls)"]
+
+
+def test_second_run_changes_nothing(repo: Path) -> None:
+    run(repo, dry_run=False, assume_yes=True)
+    assert plan(repo).changes == {}
+
+
+def test_dry_run_writes_nothing(repo: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    before = (repo / "pyproject.toml").read_text()
+    run(repo, dry_run=True, assume_yes=False)
+    assert _files(repo) == ["pyproject.toml"]
+    assert (repo / "pyproject.toml").read_text() == before
+    assert "+++ .pre-commit-config.yaml" in capsys.readouterr().out
+
+
+def test_conflicting_value_is_shown(repo: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    (repo / "pyproject.toml").write_text("[tool.ruff.lint.mccabe]\nmax-complexity = 15\n")
+    run(repo, dry_run=True, assume_yes=False)
+    out = capsys.readouterr().out
+    assert "-max-complexity = 15" in out
+    assert "+max-complexity = 10" in out
+
+
+def test_declined_file_is_not_written(repo: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("builtins.input", lambda _: "n")
+    run(repo, dry_run=False, assume_yes=False)
+    assert _files(repo) == ["pyproject.toml"]
