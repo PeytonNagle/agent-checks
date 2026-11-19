@@ -8,7 +8,8 @@ file=$(cd "$(dirname "$file")" && printf '%s/%s' "$(pwd -P)" "$(basename "$file"
 case "$file" in "$root"/*) ;; *) exit 0 ;; esac
 cd "$root" || exit 1
 if command -v pre-commit >/dev/null 2>&1; then set -- pre-commit; else set -- uvx pre-commit; fi
-if ! out=$("$@" run --files "$file" 2>&1); then
+# The repo-wide agent-lint ratchet is too slow per edit; the Stop hook runs it.
+if ! out=$(SKIP=agent-lint "$@" run --files "$file" 2>&1); then
   printf 'Checks failed on %s. Fix the code, not the config:\n%s\n' "$file" "$out" >&2
   exit 2
 fi

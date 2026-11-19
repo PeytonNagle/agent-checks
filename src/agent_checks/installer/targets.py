@@ -2,9 +2,12 @@
 
 from importlib.metadata import version
 
+from agent_checks.config_guard import EDIT_TOOLS, PROTECTED
+from agent_checks.registry import FILE_CHECKS
+
 CHECKS_URL = "https://github.com/PeytonNagle/agent-checks"
 CHECKS_REV = f"v{version('agent-checks')}"
-CHECKS_HOOKS = ("comment-length", "chat-refs", "func-length", "suppression-reason")
+CHECKS_HOOKS = tuple(FILE_CHECKS)
 AGENT_LINT_URL = "https://github.com/MartinCastroAlvarez/agent-lint"
 AGENT_LINT_REV = "bcf12b8cbd6a9e37638f4760d781454167e69c26"
 RUFF_URL = "https://github.com/astral-sh/ruff-pre-commit"
@@ -30,15 +33,10 @@ MYPY: dict[str, object] = {"strict": True, "warn_unreachable": True}
 MYPY_ERROR_CODES = ("ignore-without-code",)
 AGENT_CHECKS = {"max-comment-lines": 2, "max-function-lines": 40}
 
-PROTECTED_GLOBS = (
-    "**/pyproject.toml",
-    "**/.pre-commit-config.yaml",
-    "**/.github/workflows/**",
-    "**/.claude/settings.json",
-    "**/.claude/hooks/**",
-    "**/.agent-lint/**",
+PROTECTED_GLOBS = tuple(
+    f"**/{p.removesuffix('*')}{'**' if p.endswith('*') else ''}" for p in PROTECTED
 )
-EDIT_MATCHER = "Edit|Write|MultiEdit|NotebookEdit"
+EDIT_MATCHER = "|".join(sorted(EDIT_TOOLS))
 GUARD_COMMAND = f"uvx --from git+{CHECKS_URL}@{CHECKS_REV} agent-checks config-guard"
 LINT_FILE_COMMAND = '"$CLAUDE_PROJECT_DIR"/.claude/hooks/lint-file.sh'
 LINT_CHANGED_COMMAND = '"$CLAUDE_PROJECT_DIR"/.claude/hooks/lint-changed.sh'

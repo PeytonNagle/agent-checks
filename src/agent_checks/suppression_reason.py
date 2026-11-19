@@ -24,10 +24,6 @@ REASON = re.compile(r"#\s*\S")
 FIX = "write `# <tool>: <CODE>  # <why this is safe>`, or fix the code instead"
 
 
-def add_arguments(parser: argparse.ArgumentParser) -> None:
-    del parser
-
-
 def _problem(text: str) -> str | None:
     for name, pattern in SUPPRESSIONS.items():
         found = pattern.search(text)

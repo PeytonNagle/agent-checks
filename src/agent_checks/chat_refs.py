@@ -3,6 +3,7 @@
 import argparse
 import re
 from collections.abc import Iterator
+from functools import cache
 from pathlib import Path
 
 from agent_checks.comments import comments
@@ -12,19 +13,19 @@ DEFAULT_PATTERNS = (
     r"\bas (we )?discussed\b",
     r"\bper (the|our) (plan|chat|conversation|discussion)\b",
     r"\boption [A-D]\b",
-    r"\bstep \d+\b",
-    r"\bphase \d+\b",
+    r"\b(step|phase) \d+ (of|in|from) (the|our|this|your) (plan|chat|conversation)\b",
+    r"\bper (step|phase) \d+\b",
     r"\bas you (asked|requested|suggested)\b",
 )
 
 
-def add_arguments(parser: argparse.ArgumentParser) -> None:
-    del parser
+@cache
+def _regex(extra: tuple[str, ...]) -> re.Pattern[str]:
+    return re.compile("|".join(f"(?:{p})" for p in (*DEFAULT_PATTERNS, *extra)), re.IGNORECASE)
 
 
 def check(path: Path, args: argparse.Namespace) -> Iterator[Violation]:
-    patterns = [*DEFAULT_PATTERNS, *args.config.get("chat-patterns", [])]
-    regex = re.compile("|".join(f"(?:{p})" for p in patterns), re.IGNORECASE)
+    regex = _regex(tuple(args.config.get("chat-patterns", [])))
     for comment in comments(path):
         found = regex.search(comment.text)
         if found:

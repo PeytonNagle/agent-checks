@@ -9,8 +9,9 @@ from conftest import Run, Write
         "per the plan",
         "per our conversation",
         "Option B is faster",
-        "step 3 of the rollout",
-        "Phase 2 only",
+        "step 3 of the plan",
+        "Phase 2 of our plan",
+        "per step 4",
         "as you asked",
     ],
 )
@@ -40,3 +41,8 @@ def test_shell_comments(write: Write, run: Run) -> None:
 def test_extra_patterns_from_config(write: Write, run: Run) -> None:
     write("pyproject.toml", '[tool.agent-checks]\nchat-patterns = ["\\\\bticket-less\\\\b"]\n')
     assert run("chat-refs", write("a.py", "# ticket-less fix\n"))[0] == 1
+
+
+def test_domain_phases_and_steps_pass(write: Write, run: Run) -> None:
+    text = "# stress-ng on top in phase 3\n# what runbook step 1 leaves behind\n"
+    assert run("chat-refs", write("a.sh", text))[0] == 0

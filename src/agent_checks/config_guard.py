@@ -64,8 +64,11 @@ def run(stdin: TextIO, stderr: TextIO) -> int:
         return 1
     root = Path(os.environ.get("CLAUDE_PROJECT_DIR") or payload.get("cwd") or ".").resolve()
     rel = _target(payload, root)
-    patterns = [*PROTECTED, *_extra_patterns(root, stderr)]
-    if rel is None or not _is_protected(rel, patterns):
+    if rel is None:
+        return 0
+    if not _is_protected(rel, list(PROTECTED)) and not _is_protected(
+        rel, _extra_patterns(root, stderr)
+    ):
         return 0
     print(
         f"config-guard: {rel} is protected lint, CI or hook config. Do not edit it to make a "

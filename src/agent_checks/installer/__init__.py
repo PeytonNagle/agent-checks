@@ -40,10 +40,12 @@ def plan(root: Path) -> Plan:
     for rel in _pyprojects(root):
         old = _read(root / rel)
         result.add(rel, old, merge.pyproject(old))
-    old = _read(root / ".pre-commit-config.yaml")
-    result.add(".pre-commit-config.yaml", old, merge.pre_commit(old))
-    old = _read(root / ".claude/settings.json")
-    result.add(".claude/settings.json", old, merge.claude_settings(old))
+    for name, merger in (
+        (".pre-commit-config.yaml", merge.pre_commit),
+        (".claude/settings.json", merge.claude_settings),
+    ):
+        old = _read(root / name)
+        result.add(name, old, merger(old))
     for name in ("lint-file.sh", "lint-changed.sh"):
         new = files("agent_checks.claude_hooks").joinpath(name).read_text()
         result.add(f".claude/hooks/{name}", _read(root / ".claude/hooks" / name), new)
