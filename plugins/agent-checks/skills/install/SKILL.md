@@ -8,7 +8,7 @@ description: Install agent-checks into the current repository - lint thresholds,
 Work on a new branch. Never weaken a threshold or add a suppression to get a check passing.
 
 1. Preview the changes:
-   `uvx --from git+https://github.com/PeytonNagle/agent-checks@v0.1.0 agent-checks init --dry-run`
+   `uvx --from git+https://github.com/PeytonNagle/agent-checks@v0.1.1 agent-checks init --dry-run`
 2. Show the user the diff and summarize it: which files change, and any existing threshold that gets stricter.
 3. Once the user approves, apply it with the same command, using `--yes` instead of `--dry-run`.
 4. Run `uvx pre-commit run --all-files` and fix every violation in the code:

@@ -1,6 +1,6 @@
 [project]
 name = "agent-checks"
-version = "0.1.0"
+version = "0.1.1"
 description = "Deterministic checks that keep agent-written code small, commented sparingly and unsuppressed"
 readme = "README.md"
 license = "MIT"
